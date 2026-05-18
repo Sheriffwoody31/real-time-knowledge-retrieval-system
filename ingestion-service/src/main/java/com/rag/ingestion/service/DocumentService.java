@@ -1,7 +1,7 @@
 package com.rag.ingestion.service;
 
+import com.rag.common.model.DocumentEvent;
 import com.rag.ingestion.exception.DocumentStorageException;
-import com.rag.ingestion.model.DocumentEvent;
 import com.rag.ingestion.producer.DocumentEventProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

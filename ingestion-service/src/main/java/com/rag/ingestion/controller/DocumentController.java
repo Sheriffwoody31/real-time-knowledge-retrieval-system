@@ -1,6 +1,6 @@
 package com.rag.ingestion.controller;
 
-import com.rag.ingestion.model.DocumentEvent;
+import com.rag.common.model.DocumentEvent;
 import com.rag.ingestion.service.DocumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

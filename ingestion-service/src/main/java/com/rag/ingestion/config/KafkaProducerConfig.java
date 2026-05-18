@@ -1,6 +1,6 @@
 package com.rag.ingestion.config;
 
-import com.rag.ingestion.model.DocumentEvent;
+import com.rag.common.model.DocumentEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;

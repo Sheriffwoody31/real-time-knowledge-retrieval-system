@@ -1,7 +1,7 @@
 package com.rag.ingestion.producer;
 
+import com.rag.common.model.DocumentEvent;
 import com.rag.ingestion.exception.DocumentEventPublishException;
-import com.rag.ingestion.model.DocumentEvent;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

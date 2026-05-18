@@ -1,4 +1,4 @@
-package com.rag.ingestion.model;
+package com.rag.common.model;
 
 import java.time.Instant;
 
