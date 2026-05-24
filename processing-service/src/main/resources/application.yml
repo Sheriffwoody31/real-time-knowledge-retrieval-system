@@ -1,13 +1,20 @@
 spring:
+  application:
+    name: processing-service
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      group-id: processing-group
       auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
-    properties:
-      spring.json.trusted.packages: "*"
 server:
   port: 8081
+
+processing:
+  storage:
+    extracted-text-root: ../storage/extracted
+  kafka:
+    raw-document-events-topic: raw-doc-events
+    document-text-extracted-events-topic: document-text-extracted-events
+    group-id: processing-group
+    trusted-packages: com.rag.common.model
+    send-timeout-seconds: 30

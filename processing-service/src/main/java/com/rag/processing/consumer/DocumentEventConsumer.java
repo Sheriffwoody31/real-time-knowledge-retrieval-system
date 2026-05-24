@@ -1,6 +1,7 @@
 package com.rag.processing.consumer;
 
 import com.rag.common.model.DocumentEvent;
+import com.rag.processing.service.DocumentProcessingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -11,9 +12,15 @@ public class DocumentEventConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentEventConsumer.class);
 
+    private final DocumentProcessingService documentProcessingService;
+
+    public DocumentEventConsumer(DocumentProcessingService documentProcessingService) {
+        this.documentProcessingService = documentProcessingService;
+    }
+
     @KafkaListener(
-            topics = "raw-doc-events",
-            groupId = "processing-group",
+            topics = "${processing.kafka.raw-document-events-topic}",
+            groupId = "${processing.kafka.group-id}",
             containerFactory = "kafkaListenerContainerFactory"
     )
     public void consume(DocumentEvent event) {
@@ -24,6 +31,6 @@ public class DocumentEventConsumer {
                 event.getFileType()
         );
 
-        // Next step: fetch file + process
+        documentProcessingService.process(event);
     }
 }

@@ -1,6 +1,7 @@
 package com.rag.ingestion.producer;
 
 import com.rag.common.model.DocumentEvent;
+import com.rag.ingestion.config.IngestionKafkaProperties;
 import com.rag.ingestion.exception.DocumentEventPublishException;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
@@ -17,27 +18,31 @@ import java.util.concurrent.TimeoutException;
 public class DocumentEventProducer {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentEventProducer.class);
-    private static final String RAW_DOC_EVENTS_TOPIC = "raw-doc-events";
-    private static final long SEND_TIMEOUT_SECONDS = 30L;
 
     private final KafkaTemplate<String, DocumentEvent> kafkaTemplate;
+    private final IngestionKafkaProperties kafkaProperties;
 
-    public DocumentEventProducer(KafkaTemplate<String, DocumentEvent> kafkaTemplate) {
+    public DocumentEventProducer(
+            KafkaTemplate<String, DocumentEvent> kafkaTemplate,
+            IngestionKafkaProperties kafkaProperties
+    ) {
         this.kafkaTemplate = kafkaTemplate;
+        this.kafkaProperties = kafkaProperties;
     }
 
     public void publish(DocumentEvent event) {
+        String topic = kafkaProperties.getRawDocumentEventsTopic();
         log.info(
                 "Publishing raw document event documentId={} topic={} fileType={}",
                 event.getDocumentId(),
-                RAW_DOC_EVENTS_TOPIC,
+                topic,
                 event.getFileType()
         );
 
         try {
             SendResult<String, DocumentEvent> result = kafkaTemplate
-                    .send(RAW_DOC_EVENTS_TOPIC, event.getDocumentId(), event)
-                    .get(SEND_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    .send(topic, event.getDocumentId(), event)
+                    .get(kafkaProperties.getSendTimeoutSeconds(), TimeUnit.SECONDS);
 
             RecordMetadata metadata = result.getRecordMetadata();
             log.info(
@@ -50,9 +55,9 @@ public class DocumentEventProducer {
         } catch (TimeoutException e) {
             log.error(
                     "Kafka publish timed out after {}s documentId={} topic={}",
-                    SEND_TIMEOUT_SECONDS,
+                    kafkaProperties.getSendTimeoutSeconds(),
                     event.getDocumentId(),
-                    RAW_DOC_EVENTS_TOPIC,
+                    topic,
                     e
             );
             throw new DocumentEventPublishException("Timed out waiting for Kafka acknowledgment.", e);
@@ -62,7 +67,7 @@ public class DocumentEventProducer {
             throw new DocumentEventPublishException("Interrupted while publishing to Kafka.", e);
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
-            log.error("Kafka publish failed documentId={} topic={}", event.getDocumentId(), RAW_DOC_EVENTS_TOPIC, cause);
+            log.error("Kafka publish failed documentId={} topic={}", event.getDocumentId(), topic, cause);
             throw new DocumentEventPublishException("Failed to publish document event to Kafka.", cause);
         }
     }
