@@ -16,6 +16,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -25,19 +27,30 @@ import java.util.Locale;
 @Service
 public class TextExtractionService {
 
+    private static final Logger log = LoggerFactory.getLogger(TextExtractionService.class);
+
     public String extract(java.nio.file.Path filePath, String fileExtension) {
         String normalizedExtension = normalizeExtension(fileExtension);
         SupportedDocumentType type = SupportedDocumentType.fromExtension(normalizedExtension)
                 .orElseThrow(() -> new IllegalArgumentException("Unsupported file extension: " + fileExtension));
 
         try {
-            return switch (type) {
+            log.info("Starting text extraction path={} documentType={}", filePath, type);
+            String extractedText = switch (type) {
                 case PDF -> extractPdf(filePath);
                 case CSV, TEXT, TEXT_FILE -> Files.readString(filePath);
-                case XLS, XLSX, XLSV -> extractSpreadsheet(filePath);
+                case XLS, XLSX -> extractSpreadsheet(filePath);
                 case PARQUET -> extractParquet(filePath);
             };
+            log.info(
+                    "Completed text extraction path={} documentType={} characters={}",
+                    filePath,
+                    type,
+                    extractedText.length()
+            );
+            return extractedText;
         } catch (IOException e) {
+            log.error("Text extraction failed path={} documentType={}", filePath, type, e);
             throw new TextExtractionException("Failed to extract text from " + filePath, e);
         }
     }

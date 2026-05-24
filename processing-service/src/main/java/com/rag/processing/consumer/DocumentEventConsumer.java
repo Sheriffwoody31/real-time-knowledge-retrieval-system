@@ -31,6 +31,17 @@ public class DocumentEventConsumer {
                 event.getFileType()
         );
 
-        documentProcessingService.process(event);
+        try {
+            documentProcessingService.process(event);
+        } catch (RuntimeException e) {
+            log.error(
+                    "Document event processing failed documentId={} filePath={} fileType={}",
+                    event != null ? event.getDocumentId() : null,
+                    event != null ? event.getFilePath() : null,
+                    event != null ? event.getFileType() : null,
+                    e
+            );
+            throw e;
+        }
     }
 }

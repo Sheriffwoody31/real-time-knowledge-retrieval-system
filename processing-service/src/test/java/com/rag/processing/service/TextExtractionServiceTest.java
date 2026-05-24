@@ -44,4 +44,13 @@ class TextExtractionServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Unsupported file extension");
     }
+
+    @Test
+    void rejectsNonStandardExcelExtension() {
+        Path unknownFile = tempDir.resolve("workbook.xlsv");
+
+        assertThatThrownBy(() -> textExtractionService.extract(unknownFile, "xlsv"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unsupported file extension");
+    }
 }

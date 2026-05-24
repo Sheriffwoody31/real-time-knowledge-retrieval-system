@@ -11,11 +11,10 @@ public enum SupportedDocumentType {
     TEXT_FILE("text"),
     PARQUET("parquet"),
     XLS("xls"),
-    XLSX("xlsx"),
-    XLSV("xlsv");
+    XLSX("xlsx");
 
     private static final Set<String> SUPPORTED_EXTENSIONS =
-            Set.of("pdf", "csv", "txt", "text", "parquet", "xls", "xlsx", "xlsv");
+            Set.of("pdf", "csv", "txt", "text", "parquet", "xls", "xlsx");
 
     private final String extension;
 
