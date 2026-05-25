@@ -41,8 +41,7 @@ public class KafkaConsumerConfig {
 
         deserializer.addTrustedPackages(kafkaProperties.getTrustedPackages());
 
-        Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, springKafkaProperties.getBootstrapServers());
+        Map<String, Object> props = new HashMap<>(springKafkaProperties.buildConsumerProperties(null));
         props.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaProperties.getGroupId());
 
         return new DefaultKafkaConsumerFactory<>(
