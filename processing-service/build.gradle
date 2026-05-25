@@ -1,0 +1,17 @@
+plugins {
+    id 'org.springframework.boot' version '3.2.5'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+dependencies {
+    implementation project(':common')
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.2'
+    implementation 'org.apache.poi:poi-ooxml:5.2.5'
+    implementation 'org.apache.parquet:parquet-avro:1.14.1'
+    implementation 'org.apache.hadoop:hadoop-common:3.3.6'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}

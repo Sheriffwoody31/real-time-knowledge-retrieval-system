@@ -1,12 +1,13 @@
 package com.rag.ingestion.service;
 
+import com.rag.common.model.DocumentEvent;
+import com.rag.common.model.SupportedDocumentType;
+import com.rag.ingestion.config.IngestionDocumentProperties;
 import com.rag.ingestion.exception.DocumentStorageException;
-import com.rag.ingestion.model.DocumentEvent;
 import com.rag.ingestion.producer.DocumentEventProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -17,7 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
-import java.util.Map;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -25,20 +26,8 @@ public class DocumentService {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
-    /**
-     * File extension (lowercase, no dot) → subfolder under the configured storage root.
-     * Supported: pdf, csv, txt, parquet, xlsx (covers Excel; "xlsv" in requirements read as xlsx).
-     */
-    private static final Map<String, String> EXTENSION_TO_SUBROOT = Map.ofEntries(
-            Map.entry("pdf", "pdf"),
-            Map.entry("csv", "csv"),
-            Map.entry("txt", "txt"),
-            Map.entry("parquet", "parquet"),
-            Map.entry("xlsx", "xlsx")
-    );
-
     private static final String SUPPORTED_EXTENSIONS_MESSAGE =
-            "Supported file extensions: pdf, csv, txt, parquet, xlsx.";
+            "Supported file extensions: " + SupportedDocumentType.supportedExtensions() + ".";
 
     private final DocumentEventProducer documentEventProducer;
     private final Path storageRoot;
@@ -46,9 +35,10 @@ public class DocumentService {
     @Autowired
     public DocumentService(
             DocumentEventProducer documentEventProducer,
-            @Value("${ingestion.document.storage-root}") String storageRoot
+            IngestionDocumentProperties documentProperties
     ) {
         this.documentEventProducer = documentEventProducer;
+        String storageRoot = documentProperties.getStorageRoot();
         if (!StringUtils.hasText(storageRoot)) {
             throw new IllegalArgumentException("ingestion.document.storage-root must not be blank.");
         }
@@ -69,15 +59,16 @@ public class DocumentService {
             throw new IllegalArgumentException("Uploaded file must not be empty.");
         }
 
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename() != null
+        String originalFileName = normalizeOriginalFileName(file.getOriginalFilename() != null
                 ? file.getOriginalFilename()
                 : "uploaded-file");
-        String typeSubRoot = resolveTypeSubRoot(originalFileName);
-        if (typeSubRoot == null) {
+        String fileExtension = extractExtension(originalFileName);
+        if (!SupportedDocumentType.isSupported(fileExtension)) {
             log.warn("Upload rejected: unsupported file name extension name={}", originalFileName);
             throw new IllegalArgumentException("Unsupported file type. " + SUPPORTED_EXTENSIONS_MESSAGE);
         }
 
+        String typeSubRoot = fileExtension.toLowerCase(Locale.ROOT);
         String documentId = UUID.randomUUID().toString();
         Instant uploadedAt = Instant.now();
 
@@ -122,14 +113,35 @@ public class DocumentService {
         String fileType = resolveFileType(file);
         DocumentEvent event = new DocumentEvent(
                 documentId,
+                originalFileName,
                 destination.toAbsolutePath().toString(),
                 fileType,
+                fileExtension,
                 uploadedAt,
                 normalizeSource(source)
         );
 
-        documentEventProducer.publish(event);
+        try {
+            documentEventProducer.publish(event);
+        } catch (RuntimeException e) {
+            cleanupStoredFile(destination, documentId);
+            throw e;
+        }
         return event;
+    }
+
+    private void cleanupStoredFile(Path destination, String documentId) {
+        try {
+            Files.deleteIfExists(destination);
+            log.info("Cleaned up stored file after publish failure documentId={} path={}", documentId, destination);
+        } catch (IOException cleanupError) {
+            log.warn(
+                    "Failed to clean up stored file after publish failure documentId={} path={}",
+                    documentId,
+                    destination,
+                    cleanupError
+            );
+        }
     }
 
     private String resolveFileType(MultipartFile file) {
@@ -145,24 +157,20 @@ public class DocumentService {
         return StringUtils.hasText(source) ? source.trim() : null;
     }
 
-    /**
-     * Maps the original filename extension to a subfolder name (e.g. {@code report.pdf} → {@code pdf}).
-     *
-     * @return subfolder segment, or {@code null} if extension is missing or not supported
-     */
-    private String resolveTypeSubRoot(String originalFileName) {
-        String ext = extractExtension(originalFileName);
-        if (!StringUtils.hasText(ext)) {
-            return null;
+    private String normalizeOriginalFileName(String originalFileName) {
+        String cleaned = StringUtils.cleanPath(originalFileName);
+        Path fileName = Path.of(cleaned).getFileName();
+        if (fileName == null || !StringUtils.hasText(fileName.toString())) {
+            return "uploaded-file";
         }
-        return EXTENSION_TO_SUBROOT.get(ext.toLowerCase());
+        return fileName.toString();
     }
 
     private String extractExtension(String filename) {
         int dot = filename.lastIndexOf('.');
         if (dot < 0 || dot == filename.length() - 1) {
-            return null;
+            return "";
         }
-        return filename.substring(dot + 1);
+        return filename.substring(dot + 1).toLowerCase(Locale.ROOT);
     }
 }

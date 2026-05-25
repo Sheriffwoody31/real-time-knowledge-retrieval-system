@@ -3,6 +3,24 @@ spring:
     name: ingestion-service
   kafka:
     bootstrap-servers: localhost:9092
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 55MB
 
 server:
   port: 8080
+
+logging:
+  level:
+    com.rag: INFO
+    org.apache.kafka: WARN
+  pattern:
+    level: "%5p [${spring.application.name:unknown-service}]"
+
+ingestion:
+  document:
+    storage-root: ../storage/raw
+  kafka:
+    raw-document-events-topic: raw-doc-events
+    send-timeout-seconds: 30

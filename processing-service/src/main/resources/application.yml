@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: processing-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      auto-offset-reset: earliest
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.rag: INFO
+    org.apache.kafka: WARN
+  pattern:
+    level: "%5p [${spring.application.name:unknown-service}]"
+
+processing:
+  storage:
+    extracted-text-root: ../storage/extracted
+  kafka:
+    raw-document-events-topic: raw-doc-events
+    document-text-extracted-events-topic: document-text-extracted-events
+    group-id: processing-group
+    trusted-packages: com.rag.common.model
+    send-timeout-seconds: 30

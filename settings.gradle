@@ -9,3 +9,4 @@ rootProject.name = 'real-time-knowledge-retrieval-system'
 
 include 'common'
 include 'ingestion-service'
+include 'processing-service'
