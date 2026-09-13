@@ -3,6 +3,7 @@
 
 # Ignore Gradle build output directory
 build
+**/build/
 
 # Uploaded documents (keep storage/.gitkeep in git)
 storage/*
