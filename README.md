@@ -14,6 +14,7 @@ A modular monolith RAG backend for ingesting knowledge sources, processing conte
 - Metadata-first ingestion registration with document idempotency
 - Processing dispatch lifecycle for `CREATED` documents
 - Processing execution skeleton for fetching, parsing, chunking, and embedding handoff
+- Retrieval search over stored pgvector embeddings
 
 ## Local Development
 
@@ -46,5 +47,16 @@ curl -X POST http://localhost:8000/api/v1/ingestion/documents \
     "version": "2026-09-20",
     "file_format": "parquet_gzip",
     "checksum": "abc123"
+  }'
+```
+
+Search embedded chunks:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/retrieval/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "customer events",
+    "top_k": 5
   }'
 ```
