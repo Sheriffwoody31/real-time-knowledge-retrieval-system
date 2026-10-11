@@ -16,6 +16,10 @@ A modular monolith RAG backend for ingesting knowledge sources, processing conte
 - Processing execution skeleton for fetching, parsing, chunking, and embedding handoff
 - Retrieval search over stored pgvector embeddings
 
+## Roadmap
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the remaining implementation plan and known gaps.
+
 ## Local Development
 
 ```bash
